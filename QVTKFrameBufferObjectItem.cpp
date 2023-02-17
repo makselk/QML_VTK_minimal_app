@@ -1,11 +1,14 @@
 #include "QVTKFrameBufferObjectItem.h"
 #include <vtkOpenGLFramebufferObject.h>
 #include <vtkOpenGLState.h>
+#include <vtkCommand.h>
+#include <vtkInteractorStyleTrackballCamera.h>
 
 
 QVTKFrameBufferObjectItem::QVTKFrameBufferObjectItem() {
     qDebug("FBOItem constructor");
     this->setMirrorVertically(true);
+    this->setAcceptedMouseButtons(Qt::RightButton | Qt::LeftButton | Qt::MidButton);
 }
 
 QVTKFrameBufferObjectItem::~QVTKFrameBufferObjectItem() {
@@ -25,6 +28,46 @@ void QVTKFrameBufferObjectItem::setFboRenderer(QVTKFrameBufferObjectRenderer *re
     m_fbo_renderer = renderer;
 }
 
+void QVTKFrameBufferObjectItem::wheelEvent(QWheelEvent *e) {
+    m_fbo_renderer->setWheelEvent(e);
+    e->accept();
+    this->update();
+}
+
+void QVTKFrameBufferObjectItem::mouseMoveEvent(QMouseEvent *e) {
+    m_fbo_renderer->setMouseMoveEvent(e);
+    e->accept();
+    this->update();
+}
+
+void QVTKFrameBufferObjectItem::mousePressEvent(QMouseEvent *e) {
+    if(e->button() == Qt::LeftButton)
+        m_fbo_renderer->setMousePressEventL(e);
+
+    else if(e->button() == Qt::RightButton)
+        m_fbo_renderer->setMousePressEventR(e);
+
+    else if(e->button() == Qt::MidButton)
+        m_fbo_renderer->setMousePressEventW(e);
+
+    e->accept();
+    this->update();
+}
+
+void QVTKFrameBufferObjectItem::mouseReleaseEvent(QMouseEvent *e) {
+    if(e->button() == Qt::LeftButton)
+        m_fbo_renderer->setMouseReleaseEventL(e);
+
+    else if (e->button() == Qt::RightButton)
+        m_fbo_renderer->setMouseReleaseEventR(e);
+
+    else if(e->button() == Qt::MidButton)
+        m_fbo_renderer->setMouseReleaseEventW(e);
+
+    e->accept();
+    this->update();
+}
+
 
 
 
@@ -41,6 +84,8 @@ QVTKFrameBufferObjectRenderer::QVTKFrameBufferObjectRenderer() {
 
     // Interactor
     m_interactor = vtkSmartPointer<vtkGenericRenderWindowInteractor>::New();
+    vtkNew<vtkInteractorStyleTrackballCamera> styl;
+    m_interactor->SetInteractorStyle(styl);
     m_interactor->EnableRenderOff();
     m_vtkRenderWindow->SetInteractor(m_interactor);
 
@@ -50,11 +95,9 @@ QVTKFrameBufferObjectRenderer::QVTKFrameBufferObjectRenderer() {
     this->update();
 }
 
-
 QVTKFrameBufferObjectRenderer::~QVTKFrameBufferObjectRenderer() {
     m_fbo_item = nullptr;
 }
-
 
 void QVTKFrameBufferObjectRenderer::synchronize(QQuickFramebufferObject * item) {
     qDebug("sync");
@@ -78,20 +121,15 @@ void QVTKFrameBufferObjectRenderer::render() {
         m_first_render = false;
     }
 
-    // Просто движения сферы (пример)
-    static int r_color = 0;
-    ++r_color;
-    static double r = 0.5;
-    r += (r_color % 200) > 100 ? -0.005 : 0.005;
-    actor->GetProperty()->SetColor(r,0,0);
-    actor->SetPosition(r * 10 - 7.5, 0, 0);
+    // Обработка событий
+    this->handleEvents();
 
     // Публикация
     m_vtkRenderWindow->Render();
     // Возвращаются исходные параметры
     m_fbo_item->window()->resetOpenGLState();
 
-    this->update();
+    //this->update();
 }
 
 void QVTKFrameBufferObjectRenderer::openGLInitState() {
@@ -125,6 +163,107 @@ QOpenGLFramebufferObject* QVTKFrameBufferObjectRenderer::createFramebufferObject
 
     return framebufferObject.release();
 }
+
+void QVTKFrameBufferObjectRenderer::setWheelEvent(QWheelEvent* e) {
+    m_mouse_wheel = std::make_shared<QWheelEvent>(*e);
+    m_mouse_wheel->ignore();
+}
+
+void QVTKFrameBufferObjectRenderer::setMouseMoveEvent(QMouseEvent* e) {
+    m_mouse_move = std::make_shared<QMouseEvent>(*e);
+    m_mouse_move->ignore();
+}
+
+void QVTKFrameBufferObjectRenderer::setMousePressEventW(QMouseEvent* e) {
+    m_mouse_press_w = std::make_shared<QMouseEvent>(*e);
+    m_mouse_press_w->ignore();
+}
+
+void QVTKFrameBufferObjectRenderer::setMousePressEventL(QMouseEvent* e) {
+    m_mouse_press_l = std::make_shared<QMouseEvent>(*e);
+    m_mouse_press_l->ignore();
+}
+
+void QVTKFrameBufferObjectRenderer::setMousePressEventR(QMouseEvent* e) {
+    m_mouse_press_r = std::make_shared<QMouseEvent>(*e);
+    m_mouse_press_r->ignore();
+}
+
+void QVTKFrameBufferObjectRenderer::setMouseReleaseEventW(QMouseEvent* e) {
+    m_mouse_release_w = std::make_shared<QMouseEvent>(*e);
+    m_mouse_release_w->ignore();
+}
+
+void QVTKFrameBufferObjectRenderer::setMouseReleaseEventL(QMouseEvent* e) {
+    m_mouse_release_l = std::make_shared<QMouseEvent>(*e);
+    m_mouse_release_l->ignore();
+}
+
+void QVTKFrameBufferObjectRenderer::setMouseReleaseEventR(QMouseEvent* e) {
+    m_mouse_release_r = std::make_shared<QMouseEvent>(*e);
+    m_mouse_release_r->ignore();
+}
+
+void QVTKFrameBufferObjectRenderer::handleEvents() {
+    // Колесо мыши прокурчено
+    if(m_mouse_wheel && !m_mouse_wheel->isAccepted()) {
+        if(m_mouse_wheel->angleDelta().y() > 0)
+            m_interactor->InvokeEvent(vtkCommand::MouseWheelForwardEvent);
+        else
+            m_interactor->InvokeEvent(vtkCommand::MouseWheelBackwardEvent);
+        m_mouse_wheel->accept();
+    }
+
+    // Колесо мыши нажато
+    if(m_mouse_press_w && !m_mouse_press_w->isAccepted()) {
+        m_interactor->SetEventInformationFlipY(m_mouse_press_w->x(), m_mouse_press_w->y());
+        m_interactor->InvokeEvent(vtkCommand::MiddleButtonPressEvent, m_mouse_press_w.get());
+        m_mouse_press_w->accept();
+    }
+
+    // ЛКМ нажата
+    if(m_mouse_press_l && !m_mouse_press_l->isAccepted()) {
+        m_interactor->SetEventInformationFlipY(m_mouse_press_l->x(), m_mouse_press_l->y());
+        m_interactor->InvokeEvent(vtkCommand::LeftButtonPressEvent, m_mouse_press_l.get());
+        m_mouse_press_l->accept();
+    }
+
+    // ПКМ нажата
+    if(m_mouse_press_r && !m_mouse_press_r->isAccepted()) {
+        m_interactor->SetEventInformationFlipY(m_mouse_press_r->x(), m_mouse_press_r->y());
+        m_interactor->InvokeEvent(vtkCommand::RightButtonPressEvent, m_mouse_press_r.get());
+        m_mouse_press_r->accept();
+    }
+
+    // Движение мышью
+    if(m_mouse_move && !m_mouse_move->isAccepted()) {
+        m_interactor->SetEventInformationFlipY(m_mouse_move->x(), m_mouse_move->y());
+        m_interactor->InvokeEvent(vtkCommand::MouseMoveEvent, m_mouse_move.get());
+        m_mouse_move->accept();
+    }
+
+    // Колесо мыши отжато
+    if(m_mouse_release_w && !m_mouse_release_w->isAccepted()) {
+        m_interactor->SetEventInformationFlipY(m_mouse_release_w->x(), m_mouse_release_w->y());
+        m_interactor->InvokeEvent(vtkCommand::MiddleButtonReleaseEvent, m_mouse_release_w.get());
+        m_mouse_release_w->accept();
+    }
+
+    // ЛКМ отжата
+    if(m_mouse_release_l && !m_mouse_release_l->isAccepted()) {
+        m_interactor->SetEventInformationFlipY(m_mouse_release_l->x(), m_mouse_release_l->y());
+        m_interactor->InvokeEvent(vtkCommand::LeftButtonReleaseEvent, m_mouse_release_l.get());
+        m_mouse_release_l->accept();
+    }
+
+    // ПКМ отжата
+    if(m_mouse_release_r && !m_mouse_release_r->isAccepted()) {
+        m_interactor->SetEventInformationFlipY(m_mouse_release_r->x(), m_mouse_release_r->y());
+        m_interactor->InvokeEvent(vtkCommand::RightButtonReleaseEvent, m_mouse_release_r.get());
+        m_mouse_release_r->accept();
+    }
+}
+
 
 void QVTKFrameBufferObjectRenderer::initScene() {
     qDebug("init scene");

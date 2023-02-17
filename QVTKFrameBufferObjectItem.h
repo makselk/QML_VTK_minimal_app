@@ -2,10 +2,6 @@
 #define QVTKFrameBufferObjectItem_h_
 
 #include <QtQuick/QQuickFramebufferObject>
-
-// Use the OpenGL API abstraction from Qt instead of from VTK because vtkgl.h
-// and other Qt OpenGL-related headers do not play nice when included in the
-// same compilation unit
 #include <QOpenGLFunctions>
 #include <QQuickWindow>
 #include <QQuickFramebufferObject>
@@ -46,6 +42,12 @@ public:
     // Инициализирует поле рендерера
     void setFboRenderer(QVTKFrameBufferObjectRenderer* renderer);
 
+public:
+    void wheelEvent(QWheelEvent* e) override;
+    void mousePressEvent(QMouseEvent* e) override;
+    void mouseReleaseEvent(QMouseEvent* e) override;
+    void mouseMoveEvent(QMouseEvent* e) override;
+
 protected:
     QVTKFrameBufferObjectRenderer* m_fbo_renderer = nullptr;
 };
@@ -78,6 +80,20 @@ public:
     // Публикация данных (в данном случае vtk) в OpenGlFrameBufferObject
     virtual void render() override;
 
+public:
+    // Методы для сохранения событий
+    void setWheelEvent(QWheelEvent* e);
+    void setMouseMoveEvent(QMouseEvent* e);
+    void setMousePressEventW(QMouseEvent* e);
+    void setMousePressEventL(QMouseEvent* e);
+    void setMousePressEventR(QMouseEvent* e);
+    void setMouseReleaseEventW(QMouseEvent* e);
+    void setMouseReleaseEventL(QMouseEvent* e);
+    void setMouseReleaseEventR(QMouseEvent* e);
+
+    void handleEvents();
+
+private:
     // Здесь задаются параметры, необходимые vtk
     // для публикации в OpenGlFrameBufferObject
     virtual void openGLInitState();
@@ -97,6 +113,16 @@ private:
     vtkSmartPointer<vtkActor> actor;
     double angle = 0.0;
     bool m_first_render = true;
+
+    // events
+    std::shared_ptr<QWheelEvent> m_mouse_wheel;
+    std::shared_ptr<QMouseEvent> m_mouse_move;
+    std::shared_ptr<QMouseEvent> m_mouse_press_w;
+    std::shared_ptr<QMouseEvent> m_mouse_press_l;
+    std::shared_ptr<QMouseEvent> m_mouse_press_r;
+    std::shared_ptr<QMouseEvent> m_mouse_release_w;
+    std::shared_ptr<QMouseEvent> m_mouse_release_l;
+    std::shared_ptr<QMouseEvent> m_mouse_release_r;
 };
 
 #endif

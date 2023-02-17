@@ -35,23 +35,23 @@ Window {
         }
     }
 
-    //Rectangle {
-    //    id : vtkRenderWindowContainer1
-    //    anchors {
-    //        left: parent.horizontalCenter
-    //        right: parent.right
-    //        top: parent.top
-    //        bottom: parent.bottom
-    //        margins: 20
-    //    }
+    Rectangle {
+        id : vtkRenderWindowContainer1
+        anchors {
+            left: parent.horizontalCenter
+            right: parent.right
+            top: parent.top
+            bottom: parent.bottom
+            margins: 20
+        }
 
-    //    VtkFboItem {
-    //        id: vtk_fbo_item1
-    //        objectName: "vtkFboItem"
-    //        visible: true
-    //        anchors.fill: parent
-    //    }
-    //}
+        VtkFboItem {
+            id: vtk_fbo_item1
+            objectName: "vtkFboItem"
+            visible: utv
+            anchors.fill: parent
+        }
+    }
 
     Button {
         anchors {
