@@ -48,7 +48,7 @@ Window {
         VtkFboItem {
             id: vtk_fbo_item1
             objectName: "vtkFboItem"
-            visible: utv
+            visible: true
             anchors.fill: parent
         }
     }
@@ -60,9 +60,8 @@ Window {
         }
         onClicked: {
             utv = !utv
+            vtk_fbo_item1.changeTrackball(utv)
             console.log(utv)
         }
     }
-
-
 }

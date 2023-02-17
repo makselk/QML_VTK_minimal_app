@@ -30,6 +30,10 @@ class QVTKFrameBufferObjectRenderer;
 class QVTKFrameBufferObjectItem : public QQuickFramebufferObject {
     Q_OBJECT
 public:
+    Q_INVOKABLE
+    void changeTrackball(const bool &);
+
+public:
     QVTKFrameBufferObjectItem();
     ~QVTKFrameBufferObjectItem();
 
@@ -91,7 +95,7 @@ public:
     void setMouseReleaseEventL(QMouseEvent* e);
     void setMouseReleaseEventR(QMouseEvent* e);
 
-    void handleEvents();
+    void setTrackball(bool state);
 
 private:
     // Здесь задаются параметры, необходимые vtk
@@ -101,6 +105,8 @@ private:
     // Первоначальная инициализация сцены
     // (Пример чисто для проверки работоспобности)
     void initScene();
+
+    void handleEvents();
 
 private:
     // Ссылка на связанный qml объект

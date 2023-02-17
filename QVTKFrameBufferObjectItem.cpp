@@ -3,6 +3,7 @@
 #include <vtkOpenGLState.h>
 #include <vtkCommand.h>
 #include <vtkInteractorStyleTrackballCamera.h>
+#include <vtkInteractorStyleImage.h>
 
 
 QVTKFrameBufferObjectItem::QVTKFrameBufferObjectItem() {
@@ -287,4 +288,19 @@ void QVTKFrameBufferObjectRenderer::initScene() {
     actor->GetProperty()->SetColor(1,0,0);
 
     m_renderer->AddViewProp(actor);
+}
+
+
+void QVTKFrameBufferObjectRenderer::setTrackball(bool state) {
+    if(state) {
+        vtkNew<vtkInteractorStyleTrackballCamera> styl;
+        this->m_interactor->SetInteractorStyle(styl);
+    } else {
+        vtkNew<vtkInteractorStyleImage> styl;
+        this->m_interactor->SetInteractorStyle(styl);
+    }
+}
+
+void QVTKFrameBufferObjectItem::changeTrackball(const bool &trackball) {
+    this->m_fbo_renderer->setTrackball(trackball);
 }
