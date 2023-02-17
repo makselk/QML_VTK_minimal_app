@@ -58,19 +58,11 @@ QVTKFrameBufferObjectRenderer::~QVTKFrameBufferObjectRenderer() {
 
 void QVTKFrameBufferObjectRenderer::synchronize(QQuickFramebufferObject * item) {
     qDebug("sync");
-
+    // При первом вызове инициализирует указаель на
+    // qml объект и дает ему ссылку на себя
     if(!m_fbo_item) {
-       m_fbo_item = static_cast<QVTKFrameBufferObjectItem*>(item);
-    }
-
-    if(!m_fbo_item->isInitialized()) {
+        m_fbo_item = static_cast<QVTKFrameBufferObjectItem*>(item);
         m_fbo_item->setFboRenderer(this);
-    }
-
-    // Подгон размера vtkRenderWindow под qml объект
-    int *rendererSize = m_vtkRenderWindow->GetSize();
-    if (m_fbo_item->width() != rendererSize[0] || m_fbo_item->height() != rendererSize[1]) {
-        m_vtkRenderWindow->SetSize(m_fbo_item->width(), m_fbo_item->height());
     }
 }
 
@@ -118,8 +110,8 @@ QOpenGLFramebufferObject* QVTKFrameBufferObjectRenderer::createFramebufferObject
     format.setAttachment(QOpenGLFramebufferObject::Depth);
     std::unique_ptr<QOpenGLFramebufferObject> framebufferObject(new QOpenGLFramebufferObject(size, format));
 
-    // По идее тут должна быть инициализация параметров vtkRenderWindow под буффер,
-    // Но они они инициализируются автоматически (по крайней мере GL_COLOR_ATTACHMENT0)
+    //// По идее тут должна быть инициализация параметров vtkRenderWindow под буффер,
+    //// Но они они инициализируются автоматически (по крайней мере GL_COLOR_ATTACHMENT0)
     //m_vtkRenderWindow->SetBackLeftBuffer(GL_COLOR_ATTACHMENT0);
     //m_vtkRenderWindow->SetFrontLeftBuffer(GL_COLOR_ATTACHMENT0);
     //m_vtkRenderWindow->SetBackBuffer(GL_COLOR_ATTACHMENT0);

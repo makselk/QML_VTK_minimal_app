@@ -64,7 +64,9 @@ public:
     ~QVTKFrameBufferObjectRenderer();
 
     // После инициализации рендерера вызывается функция синхронизации
-    // для инициализации оставшихся данных
+    // для инициализации оставшихся данных (из-за того, что
+    // QVTKFrameBufferObjectItem::createRenderer - const, внутри него
+    // нельзя определить нестатичные поля)
     // Также вызывается для синхронизации данных рендерера и item'a
     // в случае изменения параметров последнего (например, размера)
     virtual void synchronize(QQuickFramebufferObject * item) override;
